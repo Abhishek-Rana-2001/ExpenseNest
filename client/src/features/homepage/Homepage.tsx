@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { ArrowRight, TrendingUp, Lock, Zap, PieChart, BarChart3 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 

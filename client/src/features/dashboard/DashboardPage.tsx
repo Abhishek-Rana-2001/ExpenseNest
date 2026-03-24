@@ -1,5 +1,3 @@
-import { useEffect, useState } from 'react'
-import { api } from '../../lib/api'
 import DashboardChart from './components/DashboardChart'
 import { recentTransactions, summaryCards } from '@/lib/data'
 import { useAuth } from '@/context/AuthContext'
