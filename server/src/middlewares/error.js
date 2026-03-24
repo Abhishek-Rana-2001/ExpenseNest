@@ -43,7 +43,7 @@ export function errorHandler(err, _req, res, _next) {
   // eslint-disable-next-line no-console
   console.error(err)
 
-  res.status(status).json({
+  return res.status(status).json({
     ok: false,
     error: {
       message,

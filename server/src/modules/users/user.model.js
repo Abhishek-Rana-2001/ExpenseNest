@@ -23,7 +23,7 @@ const UserSchema = new mongoose.Schema(
     },
     passwordHash: {
       type: String,
-    },
+    },  
     googleSub: {
       type: String,
       unique: true,
@@ -33,14 +33,16 @@ const UserSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    role:{
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user',
+    }
   },
   {
     timestamps: true,
   },
 )
-
-UserSchema.index({ email: 1 }, { unique: true })
-UserSchema.index({ googleSub: 1 }, { unique: true, sparse: true })
 
 export const User =
   mongoose.models.User ?? mongoose.model('User', UserSchema)

@@ -12,15 +12,17 @@ export const protectRoute = (req, _res, next) => {
   if (!token) {
     throw new AppError('Unauthorized', { status: 401, code: 'UNAUTHORIZED' })
   }
-
   try {
     const decoded = jwt.verify(token, JWT_ACCESS_SECRET)
+    console.log("decoded", decoded)
     if (decoded?.type !== 'access') {
       throw new Error('Invalid token type')
     }
     req.user = { id: decoded.sub }
     return next()
-  } catch {
+  } catch(error) {
+    console.log("error:-",error);
     throw new AppError('Unauthorized', { status: 401, code: 'UNAUTHORIZED' })
   }
 }
+
