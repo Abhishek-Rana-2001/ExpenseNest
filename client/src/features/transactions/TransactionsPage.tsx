@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { api, normalizeError } from "../../lib/api";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   TransactionForm,
   type TransactionFormMode,
@@ -7,61 +7,38 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Bell, LogOut, Pencil, Plus, Settings, User } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import SearchBar from "@/components/ui/SearchBar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import type { Transaction } from "@/types";
 
-type Transaction = {
-  _id: string;
-  amount: number;
-  currency: string;
-  type: "income" | "expense";
-  description?: string;
-  category?: string;
-  date: string;
-  createdAt: string;
-};
+import { useTransactions } from "./useTransactions";
+import TransactionsTable from "./components/TransactionsTable";
 
-export function TransactionsPage() {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [search, setSearch] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
+export default function TransactionsPage() {
+  const { data: transactions = [], isLoading, error } = useTransactions();
   const [showForm, setShowForm] = useState(false);
   const [formMode, setFormMode] = useState<TransactionFormMode>("add");
   const [selectedTransaction, setSelectedTransaction] =
     useState<Transaction | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const editTxnId = searchParams.get("txn");
 
-  const fetchTransactions = useCallback(async () => {
-    try {
-      setLoadError(null);
-      const res = await api.get<{ ok: boolean; data: Transaction[] }>(
-        "/transactions",
-      );
-      setTransactions(res.data?.data ?? []);
-    } catch (error) {
-      const normalizedError = normalizeError(error);
-      setLoadError(normalizedError.message);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
 
+  // Open the edit dialog for ?txn=ID on initial load (or back/forward nav).
   useEffect(() => {
-    fetchTransactions();
-  }, [fetchTransactions]);
+    if (!editTxnId) return;
+    const tx = transactions.find((t) => t._id === editTxnId);
+    if (tx) {
+      setFormMode("edit");
+      setSelectedTransaction(tx);
+      setShowForm(true);
+    }
+  }, [editTxnId, transactions]);
 
   function openAddForm() {
     setFormMode("add");
@@ -73,159 +50,67 @@ export function TransactionsPage() {
     setFormMode("edit");
     setSelectedTransaction(transaction);
     setShowForm(true);
+    setSearchParams({ txn: transaction._id }, { replace: true });
+  }
+
+  function handleDialogChange(open: boolean) {
+    setShowForm(open);
+    if (!open && searchParams.has("txn")) {
+      searchParams.delete("txn");
+      setSearchParams(searchParams, { replace: true });
+    }
   }
 
   return (
-    <div className="space-y-8">
-      <header className="flex items-center justify-between bg-white p-4 rounded-lg">
-        <SearchBar
-          placeholder="Search transactions, merchants, or tags..."
-          value={search}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setSearch(e.target.value)
-          }
-        />
-
-        <div className="flex items-center gap-2">
-          <Button
-            className="rounded-full group cursor-pointer p-2 group"
-            variant={"ghost"}
-          ><Bell className='lg:size-6 md:size-5 group-hover:animate-vibrate duration-300 transition-all ' /></Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger>
-              <Button
-                variant={"ghost"}
-                className="rounded-full group cursor-pointer p-1"
-              >
-                <Settings
-                  className="lg:size-6 md:size-5 group-hover:rotate-180 duration-300 transition-all"
-                />
-              </Button>
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent>
-              <DropdownMenuGroup>
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuItem>
-                  <User />
-                  Profile
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-
-              <DropdownMenuItem className="focus:bg-red-500 data-highlighted:bg-red-500 data-highlighted:text-white focus:text-white">
-                <LogOut />
-                Logout
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-
-          <DropdownMenu>
-            <DropdownMenuTrigger>
-               <Button
-            className="rounded-full group cursor-pointer overflow-hidden p-2"
-            variant={"ghost"}
-          >
-            <img src="/src/assets/Avatar-image.svg" className="lg:size-6 md:size-5 object-cover rounded-full" alt="" />
-          </Button>
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent>
-              <DropdownMenuGroup>
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              </DropdownMenuGroup>
-
-              <DropdownMenuItem className="focus:bg-red-500 data-highlighted:bg-red-500 data-highlighted:text-white focus:text-white">
-                <LogOut />
-                Logout
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-         
+    <div className="space-y-8 bg-white flex-1 h-full p-4">
+      <div className="flex justify-between items-center bg-white">
+        <div className="max-sm:max-w-4/5">
+          <h1 className="sm:text-2xl text-lg font-semibold tracking-tight">
+            Transactions
+          </h1>
+          <p className="text-gray-500 text-sm">
+            Reviewing your financial journey for the last 30 days.
+          </p>
         </div>
-      </header>
-
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold tracking-tight select-none">
-          Transactions
-        </h1>
-        <Dialog open={showForm} onOpenChange={setShowForm}>
-          <div className="flex justify-end">
+        <Dialog open={showForm} onOpenChange={handleDialogChange}>
+          <div className="flex justify-end max-sm:fixed max-sm:bottom-20 max-sm:right-4 max-sm:left-4 z-20">
             <DialogTrigger asChild>
-              <Button type="button" onClick={openAddForm}>
-                <Plus />
-                Add transaction
+              <Button type="button" className="w-full" onClick={openAddForm}>
+                <Plus className="max-sm:size-5" />
+                <span className="">Add</span>
               </Button>
             </DialogTrigger>
           </div>
-          <DialogContent className="bg-background">
+          <DialogContent className="bg-white border-slate-200">
             <DialogHeader>
               <DialogTitle className="text-foreground">
                 {formMode === "add" ? "Add Transaction" : "Edit Transaction"}
               </DialogTitle>
+              <DialogDescription>
+                {formMode === "add"
+                  ? "Record a new income or expense in your ledger."
+                  : "Update the details of this transaction."}
+              </DialogDescription>
             </DialogHeader>
             <TransactionForm
               mode={formMode}
               transaction={selectedTransaction}
-              onSuccess={async () => {
-                await fetchTransactions();
-                setShowForm(false);
-              }}
+              onSuccess={() => handleDialogChange(false)}
             />
           </DialogContent>
         </Dialog>
       </div>
 
-      <div className="rounded-xl border border-border bg-card/60 p-6">
-        <h2 className="mb-4 text-sm font-semibold tracking-tight">
-          Recent transactions
-        </h2>
+      {error && <p className="text-sm text-red-500">{error.message}</p>}
 
-        {loadError && (
-          <p className="mb-4 text-sm text-destructive">{loadError}</p>
-        )}
-
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         {isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading…</p>
-        ) : transactions.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No transactions yet.</p>
+          <p className="p-6 text-sm text-slate-400">Loading transactions…</p>
         ) : (
-          <ul className="space-y-2">
-            {transactions.map((tx) => (
-              <li
-                key={tx._id}
-                className="flex items-center justify-between rounded-md border border-border bg-background/80 px-4 py-3"
-              >
-                <div>
-                  <span
-                    className={
-                      tx.type === "income" ? "text-emerald-400" : "text-red-400"
-                    }
-                  >
-                    {tx.type === "income" ? "+" : "-"}
-                    {tx.amount.toFixed(2)} {tx.currency}
-                  </span>
-                  {tx.description && (
-                    <span className="ml-2 text-sm text-muted-foreground">
-                      {tx.description}
-                    </span>
-                  )}
-                </div>
-                <span className="text-xs text-muted-foreground">
-                  {tx.category ?? "—"}
-                </span>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => openEditForm(tx)}
-                >
-                  <Pencil />
-                  Edit
-                </Button>
-              </li>
-            ))}
-          </ul>
+          <TransactionsTable
+            transactions={transactions}
+            onRowClick={openEditForm}
+          />
         )}
       </div>
     </div>

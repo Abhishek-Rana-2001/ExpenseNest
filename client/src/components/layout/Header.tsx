@@ -31,7 +31,8 @@ const Header = () => {
     });
   };
   return (
-    <header className="bg-background backdrop-blur shadow-lg">
+    <header className="bg-background backdrop-blur shadow-lg sm:hidden">
+
       <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
         <NavLink to="/" className="text-lg font-semibold tracking-tight">
           ExpenseNest
@@ -47,7 +48,7 @@ const Header = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent className="border-none">
                 <DropdownMenuItem className="cursor-pointer hover:bg-neutral-200">
-                  <NavLink to={"/"} className="flex items-center gap-2">
+                  <NavLink to={"/app/dashboard"} className="flex items-center gap-2">
                     {" "}
                     <LayoutDashboard />
                     Dashboard
@@ -55,7 +56,7 @@ const Header = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer hover:bg-neutral-200">
                   <NavLink
-                    to={"/transactions"}
+                    to={"/app/transactions"}
                     className="flex items-center gap-2 text-sm font-medium"
                   >
                     {" "}

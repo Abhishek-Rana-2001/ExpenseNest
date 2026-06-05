@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "PowerShell(Set-Location \"d:\\\\Projects\\\\personal finance tracker\\\\client\"; $output = & npx tsc --noEmit 2>&1; $output | Out-String; \"exit: $LASTEXITCODE\")",
+      "PowerShell(Set-Location \"d:\\\\Projects\\\\personal finance tracker\\\\client\"; $output = & npx tsc -b --pretty false 2>&1; $output | Out-String; \"exit: $LASTEXITCODE\")"
+    ]
+  }
+}

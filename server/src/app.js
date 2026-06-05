@@ -5,6 +5,8 @@ import express from 'express'
 import { errorHandler } from './middlewares/error.js'
 import { notFound } from './middlewares/notFound.js'
 import { authRouter } from './modules/auth/auth.routes.js'
+import { budgetsRouter } from './modules/budgets/budget.routes.js'
+import { categoriesRouter } from './modules/categories/category.routes.js'
 import { healthRouter } from './modules/health/health.routes.js'
 import { summaryRouter } from './modules/summary/summary.routes.js'
 import { transactionsRouter } from './modules/transactions/transactions.routes.js'
@@ -27,6 +29,8 @@ export function createApp() {
 
   app.use('/api/auth', authRouter)
   app.use('/api', healthRouter)
+  app.use('/api/budgets', budgetsRouter)
+  app.use('/api/categories', categoriesRouter)
   app.use('/api/summary', summaryRouter)
   app.use('/api/transactions', transactionsRouter)
 

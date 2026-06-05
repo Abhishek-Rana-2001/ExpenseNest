@@ -1,15 +1,17 @@
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { Link, useNavigate } from 'react-router-dom'
-import { PieChart } from 'lucide-react'
-import { AnimatePresence, motion } from 'motion/react'
-import { useAuth } from '../../context/AuthContext'
-import { loginSchema, type LoginInput } from './schema'
-import { useEffect } from 'react'
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Link, useNavigate } from "react-router-dom";
+import { Eye, EyeClosed, PieChart } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import { useAuth } from "../../context/AuthContext";
+import { loginSchema, type LoginInput } from "./schema";
+import { useEffect, useState } from "react";
+import Spinner from "@/components/animated/Spinner";
 
 export default function Login() {
-  const { login, error, clearError } = useAuth()
-  const navigate = useNavigate()
+  const { login, error, clearError } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
 
   const {
     register,
@@ -18,17 +20,16 @@ export default function Login() {
     formState: { errors, isSubmitting },
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
-  })
+  });
 
   useEffect(() => {
-    setFocus('email')
-  }, [setFocus])
-
+    setFocus("email");
+  }, [setFocus]);
 
   async function onSubmit(data: LoginInput) {
     try {
-      await login(data.email, data.password)
-      navigate('/app/dashboard', { replace: true })
+      await login(data.email, data.password);
+      navigate("/app/dashboard", { replace: true });
     } catch {
       // error shown via context
     }
@@ -42,10 +43,13 @@ export default function Login() {
             <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-blue-600 to-indigo-600 text-white shadow-md">
               <PieChart className="w-6 h-6" />
             </div>
-            <span className="text-2xl font-bold text-slate-900">ExpenseNest</span>
+            <span className="text-2xl font-bold text-slate-900">
+              ExpenseNest
+            </span>
           </div>
           <p className="text-sm text-slate-600 max-w-[24rem]">
-            Sign in to access your dashboard, manage your budget, and track your spending.
+            Sign in to access your dashboard, manage your budget, and track your
+            spending.
           </p>
         </div>
 
@@ -67,7 +71,7 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={clearError}
-                    className="text-red-500 hover:text-red-700"
+                    className="text-red-500 hover:text-red-700 cursor-pointer"
                     aria-label="Dismiss"
                   >
                     ×
@@ -78,7 +82,10 @@ export default function Login() {
           </AnimatePresence>
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-slate-700">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-slate-700"
+            >
               Email
             </label>
             <input
@@ -86,7 +93,7 @@ export default function Login() {
               type="email"
               autoComplete="email"
               className="mt-1 block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200"
-              {...register('email')}
+              {...register("email")}
             />
             <AnimatePresence initial={false}>
               {errors.email && (
@@ -106,16 +113,24 @@ export default function Login() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-slate-700">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-slate-700"
+            >
               Password
             </label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              className="mt-1 block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200"
-              {...register('password')}
-            />
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? "text":"password"}
+                autoComplete="current-password"
+                className="mt-1 block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                {...register("password")}
+              />
+              <button onClick={()=>setShowPassword(!showPassword)} type="button" className="absolute top-1/2 -translate-y-1/2 right-3 cursor-pointer rounded-lg bg-gray-50 p-2 hover:bg-gray-100">
+                {showPassword ?  <EyeClosed size={15}/> :<Eye size={15} /> }
+              </button>
+            </div>
             <AnimatePresence initial={false}>
               {errors.password && (
                 <motion.p
@@ -136,19 +151,28 @@ export default function Login() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-lg bg-linear-to-r from-blue-600 to-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-lg cursor-pointer bg-linear-to-r from-blue-600 to-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isSubmitting ? 'Signing in…' : 'Sign in'}
+            {isSubmitting ? (
+              <span className="flex justify-center">
+                <Spinner className="size-4" />
+              </span>
+            ) : (
+              "Sign in"
+            )}
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-slate-600">
-          Don&apos;t have an account?{' '}
-          <Link to="/signup" className="font-medium text-blue-600 hover:text-blue-700 hover:underline">
+          Don't have an account?{" "}
+          <Link
+            to="/signup"
+            className="font-medium text-blue-600 hover:text-blue-700 hover:underline"
+          >
             Sign up
           </Link>
         </p>
       </div>
     </div>
-  )
+  );
 }

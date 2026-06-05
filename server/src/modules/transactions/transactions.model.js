@@ -8,7 +8,12 @@ const TransactionSchema = new mongoose.Schema(
     type: { type: String, required: true, enum: ['income', 'expense'] },
     description: { type: String },
     date: { type: Date, default: Date.now },
-    category: { type: String },
+    categoryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Category',
+      index: true,
+    },
+    category: { type: String }, // denormalized snapshot for fast reads / legacy data
     paymentMethod: {
       type: String,
       enum: ['cash', 'upi', 'card', 'bank'],

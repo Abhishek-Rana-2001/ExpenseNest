@@ -2,6 +2,7 @@ import {
   loginUser,
   refreshTokens,
   registerUser,
+  resetPassword,
   revokeUserRefreshTokens,
 } from './auth.service.js'
 import { LoginSchema, RegisterSchema } from './auth.schema.js'
@@ -31,6 +32,7 @@ export async function registerController(req, res) {
         id: user.id,
         email: user.email,
         name: user.name,
+        baseCurrency: user.baseCurrency,
       },
       accessToken,
     },
@@ -50,6 +52,7 @@ export async function loginController(req, res) {
         id: user.id,
         email: user.email,
         name: user.name,
+        baseCurrency: user.baseCurrency,
       },
       accessToken,
     },
@@ -68,6 +71,8 @@ export async function refreshController(req, res) {
     })
   }
 
+  
+
   const { user, accessToken, refreshToken } = await refreshTokens(token)
   setRefreshCookie(res, refreshToken)
 
@@ -78,6 +83,7 @@ export async function refreshController(req, res) {
         id: user.id,
         email: user.email,
         name: user.name,
+        baseCurrency: user.baseCurrency,
       },
       accessToken,
     },
@@ -100,6 +106,14 @@ export async function logoutController(req, res) {
   }
 
   res.clearCookie(REFRESH_COOKIE_NAME, { path: '/api/auth' })
+  res.status(204).end()
+}
+
+
+export async function resetPasswordController(req, res) {
+  const {email} = req.params 
+  const {password} = req.body
+  await resetPassword(email,password)
   res.status(204).end()
 }
 

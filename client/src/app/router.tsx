@@ -1,76 +1,117 @@
 import { createBrowserRouter } from "react-router-dom";
 import { GuestRoute } from "../components/layout/GuestRoute";
-import { TransactionsPage } from "../features/transactions/TransactionsPage";
-import Login from "../features/auth/Login";
-import SignUp from "../features/auth/SignUp";
+import { ProtectedRoute } from "../components/layout/ProtectedRoute";
 import { AppLayout } from "./AppLayout";
-import { NotFoundPage } from "./NotFoundPage";
-import { Homepage } from "@/features/homepage/Homepage";
 import DashboardContainer from "@/components/layout/DashboardContainer";
-import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
-import { DashboardPage } from "@/features/dashboard/DashboardPage";
-import Analytics from "@/features/analytics/Analytics";
-import { NavigationProvider } from "@/context/NavigationContext";
+import Spinner from "@/components/animated/Spinner";
+
+function RouteHydrateFallback() {
+  return (
+    <div className="grid h-screen place-items-center">
+      <Spinner className="size-10" />
+    </div>
+  );
+}
 
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <AppLayout />,
+    HydrateFallback: RouteHydrateFallback,
     children: [
-      { index: true, element: <Homepage /> },
+      {
+        index: true,
+        lazy: async () => {
+          const { Homepage } = await import("@/features/homepage/Homepage");
+          return { Component: Homepage };
+        },
+      },
       {
         path: "app",
         element: (
           <ProtectedRoute>
-            <NavigationProvider>
             <DashboardContainer />
-            </NavigationProvider>
           </ProtectedRoute>
         ),
-        children: [{
-          path: "dashboard",
-          element: <DashboardPage />
-        },
-        {
-          path: "history",
-          element: <TransactionsPage  />
-        },
-        {
-          path: "analytics",
-          element: <Analytics />
-        },
-        {
-          path: "goals",
-          element: <DashboardPage />
-        }
-      
-      ],
-      },
-      {
-        path: "transactions",
-        element: (
-          // <ProtectedRoute>
-          <TransactionsPage />
-          // </ProtectedRoute>
-        ),
+        children: [
+          {
+            path: "dashboard",
+            lazy: async () => {
+              const { DashboardPage } = await import(
+                "@/features/dashboard/DashboardPage"
+              );
+              return { Component: DashboardPage };
+            },
+          },
+          {
+            path: "transactions",
+            lazy: async () => {
+              const { default: TransactionsPage } = await import(
+                "../features/transactions/TransactionsPage"
+              );
+              return { Component: TransactionsPage };
+            },
+          },
+          {
+            path: "analytics",
+            lazy: async () => {
+              const { default: Analytics } = await import(
+                "@/features/analytics/Analytics"
+              );
+              return { Component: Analytics };
+            },
+          },
+          {
+            path: "budgets",
+            lazy: async () => {
+              const { default: BudgetsPage } = await import(
+                "@/features/budgets/BudgetsPage"
+              );
+              return { Component: BudgetsPage };
+            },
+          },
+          {
+            path: "goals",
+            lazy: async () => {
+              const { DashboardPage } = await import(
+                "@/features/dashboard/DashboardPage"
+              );
+              return { Component: DashboardPage };
+            },
+          },
+        ],
       },
       {
         path: "login",
-        element: (
-          <GuestRoute>
-            <Login />
-          </GuestRoute>
-        ),
+        lazy: async () => {
+          const { default: Login } = await import("../features/auth/Login");
+          const LoginRoute = () => (
+            <GuestRoute>
+              <Login />
+            </GuestRoute>
+          );
+          return { Component: LoginRoute };
+        },
       },
       {
         path: "signup",
-        element: (
-          <GuestRoute>
-            <SignUp />
-          </GuestRoute>
-        ),
+        lazy: async () => {
+          const { default: SignUp } = await import("../features/auth/SignUp");
+          const SignUpRoute = () => (
+            <GuestRoute>
+              <SignUp />
+            </GuestRoute>
+          );
+          return { Component: SignUpRoute };
+        },
       },
-      { path: "*", element: <NotFoundPage /> },
+      {
+        path: "*",
+        lazy: async () => {
+          const { NotFoundPage } = await import("./NotFoundPage");
+          return { Component: NotFoundPage };
+        },
+      },
     ],
   },
 ]);

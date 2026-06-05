@@ -69,3 +69,75 @@ export async function getMonthlySummary(userId, options = {}) {
   const results = await Transaction.aggregate(pipeline)
   return results
 }
+
+/**
+ * Aggregate transactions by category for a given period (defaults to expenses).
+ * Used by the dashboard / analytics for pie charts, top-spending lists, etc.
+ *
+ * @param {string} userId
+ * @param {object} options
+ * @param {number} [options.year]
+ * @param {number} [options.month]  - 1-12, requires year
+ * @param {'expense'|'income'} [options.type] - defaults to 'expense'
+ * @returns {Promise<Array<{
+ *   categoryId: import('mongoose').Types.ObjectId | null,
+ *   name: string,
+ *   color: string | null,
+ *   icon: string | null,
+ *   total: number,
+ *   transactionCount: number
+ * }>>}
+ */
+export async function getCategoryBreakdown(userId, options = {}) {
+  const { year, month, type = 'expense' } = options
+
+  const matchStage = {
+    userId: new mongoose.Types.ObjectId(userId),
+    type,
+  }
+
+  if (year) {
+    matchStage.$expr = month
+      ? {
+          $and: [
+            { $eq: [{ $year: '$date' }, year] },
+            { $eq: [{ $month: '$date' }, month] },
+          ],
+        }
+      : { $eq: [{ $year: '$date' }, year] }
+  }
+
+  const pipeline = [
+    { $match: matchStage },
+    {
+      $group: {
+        _id: '$categoryId',
+        total: { $sum: '$amount' },
+        transactionCount: { $sum: 1 },
+      },
+    },
+    {
+      $lookup: {
+        from: 'categories',
+        localField: '_id',
+        foreignField: '_id',
+        as: 'category',
+      },
+    },
+    { $unwind: { path: '$category', preserveNullAndEmptyArrays: true } },
+    {
+      $project: {
+        _id: 0,
+        categoryId: '$_id',
+        name: { $ifNull: ['$category.name', 'Uncategorized'] },
+        color: { $ifNull: ['$category.color', null] },
+        icon: { $ifNull: ['$category.icon', null] },
+        total: 1,
+        transactionCount: 1,
+      },
+    },
+    { $sort: { total: -1 } },
+  ]
+
+  return Transaction.aggregate(pipeline)
+}

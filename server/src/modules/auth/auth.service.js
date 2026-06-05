@@ -1,9 +1,9 @@
 import argon2 from 'argon2'
 import jwt from 'jsonwebtoken'
 
-import { getEnv } from '../../config/env.js'
-import { AppError } from '../../lib/AppError.js'
 import { User } from '../users/user.model.js'
+import { AppError } from '../../lib/AppError.js'
+import { getEnv } from '../../config/env.js'
 
 const { JWT_ACCESS_SECRET, JWT_REFRESH_SECRET } = getEnv()
 
@@ -120,5 +120,18 @@ export async function refreshTokens(refreshToken) {
 
 export async function revokeUserRefreshTokens(userId) {
   await User.findByIdAndUpdate(userId, { $inc: { tokenVersion: 1 } })
+}
+
+
+export async function resetPassword(email,newPassword){
+  const user = await User.findOne({ email })
+  if (!user) {
+    throw new AppError('User not found', {
+      status: 404,
+      code: 'USER_NOT_FOUND',
+    })
+  }
+
+  await User.findByIdAndUpdate(user._id, { passwordHash: await argon2.hash(newPassword), $inc: { tokenVersion: 1 } })
 }
 

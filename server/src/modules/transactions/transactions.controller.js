@@ -5,6 +5,7 @@ import {
 } from './transactions.schema.js'
 import {
   createTransaction,
+  deleteTransaction as deleteTransactionService,
   listTransactions,
   updateTransaction,
 } from './transactions.service.js'
@@ -29,5 +30,14 @@ export async function patchTransaction(req, res) {
     input,
   })
   res.json({ ok: true, data })
+}
+
+
+export async function deleteTransaction(req, res) {
+  await deleteTransactionService({
+    userId: req.user.id,
+    transactionId: req.params.id,
+  })
+  res.status(204).end()
 }
 

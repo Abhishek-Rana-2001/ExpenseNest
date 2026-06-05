@@ -1,15 +1,15 @@
 import { RouterProvider } from 'react-router-dom'
 import { AuthProvider } from '../context/AuthContext'
 import { router } from './router'
-import ReactLenis from 'lenis/react'
+import { Toaster } from 'react-hot-toast'
 
 function App() {
   return (
     <AuthProvider>
-       <ReactLenis root />
-      <div className="min-h-screen bg-background text-foreground">
-        <RouterProvider router={router} />
-      </div>
+       <Toaster />
+        <div className="min-h-screen bg-gray-50 text-foreground">
+          <RouterProvider router={router} />
+        </div>
     </AuthProvider>
   )
 }

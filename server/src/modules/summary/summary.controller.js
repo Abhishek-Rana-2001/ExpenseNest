@@ -1,4 +1,7 @@
-import { getMonthlySummary } from './summary.service.js'
+import {
+  getCategoryBreakdown as getCategoryBreakdownService,
+  getMonthlySummary,
+} from './summary.service.js'
 
 export async function getSummary(req, res) {
   const userId = req.user.id
@@ -8,8 +11,24 @@ export async function getSummary(req, res) {
 
   const options = { limit }
   if (year && !Number.isNaN(year)) options.year = year
-  if (month && !Number.isNaN(month) && month >= 1 && month <= 12) options.month = month
+  if (month && !Number.isNaN(month) && month >= 1 && month <= 12)
+    options.month = month
 
   const summary = await getMonthlySummary(userId, options)
   res.json({ ok: true, data: summary })
+}
+
+export async function getCategoryBreakdown(req, res) {
+  const userId = req.user.id
+  const year = req.query.year ? parseInt(req.query.year, 10) : undefined
+  const month = req.query.month ? parseInt(req.query.month, 10) : undefined
+  const type = req.query.type === 'income' ? 'income' : 'expense'
+
+  const options = { type }
+  if (year && !Number.isNaN(year)) options.year = year
+  if (month && !Number.isNaN(month) && month >= 1 && month <= 12)
+    options.month = month
+
+  const breakdown = await getCategoryBreakdownService(userId, options)
+  res.json({ ok: true, data: breakdown })
 }

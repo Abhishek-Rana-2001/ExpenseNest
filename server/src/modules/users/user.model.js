@@ -37,7 +37,12 @@ const UserSchema = new mongoose.Schema(
       type: String,
       enum: ['user', 'admin'],
       default: 'user',
-    }
+    },
+    baseCurrency: {
+      type: String,
+      enum: ['INR', 'USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD'],
+      default: 'INR',
+    },
   },
   {
     timestamps: true,

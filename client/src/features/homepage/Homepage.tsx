@@ -20,7 +20,7 @@ export const Homepage: React.FC = () => {
 
             {/* Hero Section */}
             <section className="px-6 md:px-12 lg:px-20 py-20 text-center">
-                <h1 className="text-5xl md:text-6xl font-bold text-slate-900 mb-6 leading-tight">
+                <h1 className="text-5xl md:text-6xl font-bold text-slate-900 mb-6 leading-15">
                     Take Control of Your
                     <span className="block bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                         Financial Future

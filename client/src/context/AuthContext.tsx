@@ -6,7 +6,7 @@ import {
   useState,
 } from 'react'
 
-import { api, normalizeError, setAccessToken } from '../lib/api'
+import { api, normalizeError, refreshSession, setAccessToken } from '../lib/api'
 import type { User } from '../types'
 
 type AuthContextType = {
@@ -43,19 +43,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshAuth = useCallback(async () => {
     try {
-      const res = await api.post<AuthResponse>('/auth/refresh')
-      const data = res.data?.data
-      if (data?.user && data?.accessToken) {
-        applyAuth(data.user, data.accessToken)
-      } else {
-        applyAuth(null, null)
-      }
-    } catch {
-      applyAuth(null, null)
+      const data = await refreshSession()
+      setUser((data?.user as User) ?? null)
     } finally {
       setIsLoading(false)
     }
-  }, [applyAuth])
+  }, [])
 
   useEffect(() => {
     refreshAuth()

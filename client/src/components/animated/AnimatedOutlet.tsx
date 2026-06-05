@@ -2,11 +2,13 @@ import { useOutlet, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { useNavigation } from "@/context/NavigationContext";
 import { useRef } from "react";
+import useResponsive from "@/hooks/useResponsive";
 
 const AnimatedOutlet = () => {
   const outlet = useOutlet();
   const location = useLocation();
   const { direction } = useNavigation();
+  const { isMobile } = useResponsive();
 
   const prevOutletRef = useRef(outlet);
   const prevPathRef = useRef(location.pathname);
@@ -33,10 +35,10 @@ const AnimatedOutlet = () => {
           opacity: 0,
         }}
         transition={{
-          duration: 0.35,
+          duration: isMobile ? 0.1 : 0.35,
           ease: "easeInOut",
         }}
-        className="absolute inset-0 px-12 py-8"
+        className="p-5"
       >
         {prevOutletRef.current}
       </motion.div>
@@ -44,4 +46,4 @@ const AnimatedOutlet = () => {
   );
 };
 
-export default AnimatedOutlet
+export default AnimatedOutlet;

@@ -68,7 +68,7 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
         />
 
         {/* 🔥 Shortcut hint */}
-        <span className="text-xs text-gray-400 hidden sm:block">/</span>
+        {/* <span className="text-xs text-gray-400 hidden sm:block">/</span> */}
       </motion.div>
     )
   }
