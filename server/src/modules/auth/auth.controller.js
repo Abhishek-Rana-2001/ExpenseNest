@@ -13,7 +13,9 @@ function setRefreshCookie(res, token) {
   const isProd = process.env.NODE_ENV === 'production'
   res.cookie(REFRESH_COOKIE_NAME, token, {
     httpOnly: true,
-    sameSite: 'lax',
+    // 'none' lets the browser attach the cookie on cross-origin requests
+    // (Vercel → Render). Requires Secure (which we set in prod anyway).
+    sameSite: isProd ? 'none' : 'lax',
     secure: isProd,
     path: '/api/auth',
   })
@@ -105,7 +107,12 @@ export async function logoutController(req, res) {
     }
   }
 
-  res.clearCookie(REFRESH_COOKIE_NAME, { path: '/api/auth' })
+  const isProd = process.env.NODE_ENV === 'production'
+  res.clearCookie(REFRESH_COOKIE_NAME, {
+    path: '/api/auth',
+    sameSite: isProd ? 'none' : 'lax',
+    secure: isProd,
+  })
   res.status(204).end()
 }
 
