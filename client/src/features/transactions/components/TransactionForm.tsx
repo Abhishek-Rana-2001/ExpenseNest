@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -38,9 +38,11 @@ import {
   Banknote,
   CreditCard,
   Landmark,
+  Paperclip,
   RotateCw,
   Smartphone,
   Trash2,
+  X,
   type LucideIcon,
 } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -125,6 +127,11 @@ export function TransactionForm({
   const baseCurrency = user?.baseCurrency ?? DEFAULT_CURRENCY
   const defaultFormValues = makeDefaultFormValues(baseCurrency)
 
+  // Files picked but not yet uploaded — kept in memory until Save fires.
+  const [files, setFiles] = useState<File[]>([])
+  const [isDragging, setIsDragging] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   const {
     register,
     handleSubmit,
@@ -150,20 +157,65 @@ export function TransactionForm({
         category: data.category || undefined,
         date: toUtcNoonIsoString(data.date),
       }
+
+      // 1. Create or update the transaction. Capture its id so we can attach files.
+      let transactionId: string | undefined
       if (mode === 'edit' && transaction?._id) {
         await api.patch(`/transactions/${transaction._id}`, payload)
+        transactionId = transaction._id
       } else {
-        await api.post('/transactions', payload)
+        const res = await api.post<{ ok: boolean; data: { _id: string } }>(
+          '/transactions',
+          payload,
+        )
+        transactionId = res.data?.data?._id
+      }
+
+      // 2. Upload any picked files in parallel.
+      if (transactionId && files.length > 0) {
+        await Promise.all(
+          files.map((file) => {
+            const fd = new FormData()
+            fd.append('file', file)
+            return api.post(
+              `/transactions/${transactionId}/attachments`,
+              fd,
+              { headers: { 'Content-Type': 'multipart/form-data' } },
+            )
+          }),
+        )
       }
     },
     onSuccess: () => {
       // Writing a transaction may have created a new Category via findOrCreate.
       queryClient.invalidateQueries({ queryKey: TRANSACTIONS_QUERY_KEY })
+      // Also invalidate single-tx queries — the detail page reads from ['transaction', id].
+      queryClient.invalidateQueries({ queryKey: ['transaction'] })
       queryClient.invalidateQueries({ queryKey: CATEGORIES_QUERY_KEY })
       reset(defaultFormValues)
+      setFiles([])
       onSuccess?.()
     },
   })
+
+  // File helpers
+  const ALLOWED = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
+  const MAX_BYTES = 5 * 1024 * 1024
+
+  function addFiles(picked: FileList | File[]) {
+    const valid: File[] = []
+    Array.from(picked).forEach((f) => {
+      if (!ALLOWED.includes(f.type)) return
+      if (f.size > MAX_BYTES) return
+      valid.push(f)
+    })
+    // Cap at 5 attachments total (matches the model's array limit).
+    setFiles((prev) => [...prev, ...valid].slice(0, 5))
+  }
+
+  function removeFile(index: number) {
+    setFiles((prev) => prev.filter((_, i) => i !== index))
+  }
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
@@ -405,6 +457,80 @@ export function TransactionForm({
           {...register('isRecurring')}
         />
       </label>
+
+      {/* Attachments dropzone */}
+      <div>
+        <Label>Attachments</Label>
+        <div
+          onDragOver={(e) => {
+            e.preventDefault()
+            setIsDragging(true)
+          }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault()
+            setIsDragging(false)
+            addFiles(e.dataTransfer.files)
+          }}
+          onClick={() => fileInputRef.current?.click()}
+          className={cn(
+            'mt-1 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed px-4 py-5 text-center transition-colors',
+            isDragging
+              ? 'border-blue-500 bg-blue-50/50'
+              : 'border-slate-200 bg-slate-50/40 hover:bg-slate-50',
+          )}
+        >
+          <Paperclip size={18} className="text-slate-400" />
+          <p className="mt-1.5 text-xs text-slate-600">
+            <span className="font-medium text-blue-600">Click to upload</span> or
+            drag receipts here
+          </p>
+          <p className="text-[10px] text-slate-400">
+            JPG, PNG, WebP, or PDF · up to 5 MB · max 5 files
+          </p>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept="image/jpeg,image/png,image/webp,application/pdf"
+            className="hidden"
+            onChange={(e) => {
+              if (e.target.files) addFiles(e.target.files)
+              e.target.value = '' // allow re-picking the same file later
+            }}
+          />
+        </div>
+
+        {files.length > 0 && (
+          <ul className="mt-2 space-y-1">
+            {files.map((file, i) => (
+              <li
+                key={`${file.name}-${i}`}
+                className="flex items-center justify-between rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs"
+              >
+                <div className="flex min-w-0 items-center gap-2">
+                  <Paperclip size={12} className="shrink-0 text-slate-400" />
+                  <span className="truncate text-slate-700">{file.name}</span>
+                  <span className="shrink-0 text-slate-400">
+                    {(file.size / 1024).toFixed(0)} KB
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    removeFile(i)
+                  }}
+                  className="ml-2 text-slate-400 hover:text-rose-600"
+                  aria-label={`Remove ${file.name}`}
+                >
+                  <X size={14} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
 
       {submitError && (
         <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">

@@ -2,6 +2,7 @@ import { CreateBudgetSchema, UpdateBudgetSchema } from './budget.schema.js'
 import {
   createBudget,
   deleteBudget as deleteBudgetService,
+  getBudgetService,
   listBudgets,
   updateBudget,
 } from './budget.service.js'
@@ -33,4 +34,21 @@ export async function deleteBudget(req, res) {
     budgetId: req.params.id,
   })
   res.status(204).end()
+}
+
+
+export async function getBudget(req, res) {
+  const year = req.query.year ? parseInt(req.query.year, 10) : undefined
+  const month = req.query.month ? parseInt(req.query.month, 10) : undefined
+
+  const data = await getBudgetService({
+    userId: req.user.id,
+    budgetId: req.params.id,
+    year: year && !Number.isNaN(year) ? year : undefined,
+    month:
+      month && !Number.isNaN(month) && month >= 1 && month <= 12
+        ? month
+        : undefined,
+  })
+  res.json({ ok: true, data })
 }

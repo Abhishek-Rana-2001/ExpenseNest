@@ -31,11 +31,11 @@ const Header = () => {
     });
   };
   return (
-    <header className="bg-background backdrop-blur shadow-lg sm:hidden">
+    <header className="bg-background backdrop-blur shadow-lg sm:hidden sticky top-0">
 
       <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
         <NavLink to="/" className="text-lg font-semibold tracking-tight">
-          ExpenseNest
+           <h2 className="m-0 text-[#1d4ed8] text-xl font-bold">ExpenseNest</h2>
         </NavLink>
         <nav className="flex items-center gap-2 text-xs text-zinc-300">
           {user ? (

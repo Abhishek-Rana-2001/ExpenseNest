@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import {
   deleteBudget,
+  getBudget,
   getBudgets,
   patchBudget,
   postBudget,
@@ -11,6 +12,7 @@ export const budgetsRouter = Router()
 
 budgetsRouter.use(protectRoute)
 budgetsRouter.get('/', getBudgets)
+budgetsRouter.get('/:id', getBudget)
 budgetsRouter.post('/', postBudget)
 budgetsRouter.patch('/:id', patchBudget)
 budgetsRouter.delete('/:id', deleteBudget)

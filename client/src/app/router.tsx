@@ -37,45 +37,58 @@ export const router = createBrowserRouter([
           {
             path: "dashboard",
             lazy: async () => {
-              const { DashboardPage } = await import(
-                "@/features/dashboard/DashboardPage"
-              );
+              const { DashboardPage } =
+                await import("@/features/dashboard/DashboardPage");
               return { Component: DashboardPage };
             },
           },
           {
             path: "transactions",
             lazy: async () => {
-              const { default: TransactionsPage } = await import(
-                "../features/transactions/TransactionsPage"
-              );
+              const { default: TransactionsPage } =
+                await import("../features/transactions/TransactionsPage");
               return { Component: TransactionsPage };
+            },
+          },
+          {
+            path: "transactions/:id",
+            lazy: async () => {
+              const { default: TransactionDetailPage } =
+                await import("../features/transactions/TransactionDetailPage");
+              return { Component: TransactionDetailPage };
             },
           },
           {
             path: "analytics",
             lazy: async () => {
-              const { default: Analytics } = await import(
-                "@/features/analytics/Analytics"
-              );
+              const { default: Analytics } =
+                await import("@/features/analytics/Analytics");
               return { Component: Analytics };
             },
           },
           {
             path: "budgets",
             lazy: async () => {
-              const { default: BudgetsPage } = await import(
-                "@/features/budgets/BudgetsPage"
-              );
+              const { default: BudgetsPage } =
+              await import("@/features/budgets/BudgetsPage");
               return { Component: BudgetsPage };
             },
+            children: [
+              {
+                path: ":id",
+                lazy: async () => {
+                  const { default: BudgetDetail } =
+                    await import("@/features/budgets/BudgetDetail");
+                    return {Component:BudgetDetail}
+                },
+              },
+            ],
           },
           {
             path: "goals",
             lazy: async () => {
-              const { DashboardPage } = await import(
-                "@/features/dashboard/DashboardPage"
-              );
+              const { DashboardPage } =
+                await import("@/features/dashboard/DashboardPage");
               return { Component: DashboardPage };
             },
           },

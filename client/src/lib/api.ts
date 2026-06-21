@@ -9,6 +9,8 @@ let accessToken: string | null = null
 let refreshPromise: Promise<RefreshData | null> | null = null
 
 export function setAccessToken(token: string | null) {
+  console.log(token);
+  
   accessToken = token
 }
 
@@ -92,12 +94,14 @@ export type ApiError = {
 }
 
 function isApiError(value: unknown): value is ApiError {
-  return (
-    !!value &&
-    typeof value === 'object' &&
-    'message' in value &&
-    'code' in value
-  )
+  if (!value || typeof value !== 'object') return false
+  // AxiosError also carries `message` and `code`, so a pure structural check
+  // would false-positive raw axios errors and skip extraction. Filter them out
+  // by their axios-only markers first.
+  if ('isAxiosError' in value || 'response' in value || 'config' in value) {
+    return false
+  }
+  return 'message' in value && 'code' in value
 }
 
 export function normalizeError(error: unknown): ApiError {

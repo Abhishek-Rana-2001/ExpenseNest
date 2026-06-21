@@ -15,14 +15,15 @@ async function resolveCategory(userId, input) {
 
 /**
  * @param {string} userId
- * @param {object} [query] - Parsed list query (type, category, dateFrom, dateTo, sort, order, page, limit)
+ * @param {object} [query] - Parsed list query (type, category, from, to, sort, order, page, limit)
  */
 export async function listTransactions(userId, query = {}) {
   const {
     type,
+    search,
     category,
-    dateFrom,
-    dateTo,
+    from,
+    to,
     sort: sortField = 'date',
     order = 'desc',
     page = 1,
@@ -30,14 +31,22 @@ export async function listTransactions(userId, query = {}) {
   } = query
 
   const filter = { userId }
+  if (search) {
+    filter.$or = [
+      { title: { $regex: search, $options: 'i' } },
+      { description: { $regex: search, $options: 'i' } },
+      { category: { $regex: search, $options: 'i' } },
+    ]
+  }
 
   if (type) filter.type = type
   if (category) filter.category = category
-  if (dateFrom || dateTo) {
+  if (from || to) {
     filter.date = {}
-    if (dateFrom) filter.date.$gte = new Date(dateFrom)
-    if (dateTo) filter.date.$lte = new Date(dateTo)
+    if (from) filter.date.$gte = new Date(from)
+    if (to) filter.date.$lte = new Date(to)
   }
+
 
   const sort = { [sortField]: order === 'asc' ? 1 : -1 }
   const skip = (page - 1) * limit

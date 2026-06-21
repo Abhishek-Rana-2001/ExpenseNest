@@ -1,8 +1,9 @@
 
 import { ArrowRight, TrendingUp, Lock, Zap, PieChart, BarChart3 } from 'lucide-react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 
 export const Homepage: React.FC = () => {
+    const navigate = useNavigate();
     const iconAnimationClass = "transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12";
     
     return (
@@ -30,7 +31,7 @@ export const Homepage: React.FC = () => {
                     Track, analyze, and optimize your spending with ExpenseNest. Smart insights for better financial decisions.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <button className="px-8 py-4 bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-lg flex items-center justify-center gap-2 transition transform hover:scale-105">
+                    <button onClick={()=>navigate("/signup")} className="px-8 py-4 bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-lg flex items-center justify-center gap-2 transition transform hover:scale-105">
                         Get Started Free <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
                     </button>
                     <button className="px-8 py-4 border-2 border-blue-300 text-blue-700 font-bold rounded-lg hover:bg-blue-50 transition">

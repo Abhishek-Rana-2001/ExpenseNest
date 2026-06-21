@@ -14,6 +14,18 @@ export type User = {
 }
 
 
+export type Attachment = {
+  key: string;
+  contentType: string;
+  size: number;
+  filename: string;
+  width?: number;
+  height?: number;
+  uploadedAt: string;
+  /** Only present on responses that pre-sign URLs (single-tx fetch / list enrichment). */
+  viewUrl?: string;
+}
+
 export type Transaction = {
   _id: string;
   userId: string;
@@ -23,8 +35,10 @@ export type Transaction = {
   description?: string;
   date: string;            // ISO string (can convert to Date if needed)
   category: string;
+  categoryId?: PopulatedCategory | string;
   paymentMethod: 'cash' | 'upi' | 'card' | 'bank';
   isRecurring: boolean;
+  attachments?: Attachment[];
   createdAt: string;
   updatedAt: string;
   __v: number;
@@ -53,4 +67,18 @@ export type Budget = {
   createdAt: string;
   updatedAt: string;
   __v: number;
+}
+
+
+export type filterTransactions = {
+  from: Date | null,
+  to: Date | null,
+  search?: string,
+}
+
+export type TransactionSortField = 'date' | 'amount' | 'createdAt'
+export type TransactionSortOrder = 'asc' | 'desc'
+export type TransactionSort = {
+  field: TransactionSortField
+  order: TransactionSortOrder
 }

@@ -68,7 +68,11 @@ export function DatePickerSimple({
           {selected ? format(selected, "PP") : placeholder}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto overflow-hidden p-0 border-slate-200" align="start">
+      <PopoverContent
+        align="start"
+        sideOffset={4}
+        className="w-auto overflow-hidden border-slate-200 p-0 data-[state=closed]:duration-75 data-[state=open]:duration-100 data-[state=closed]:zoom-out-100 data-[state=open]:zoom-in-100 data-[side=bottom]:slide-in-from-top-1 data-[side=top]:slide-in-from-bottom-1"
+      >
         <Calendar
           mode="single"
           selected={selected}

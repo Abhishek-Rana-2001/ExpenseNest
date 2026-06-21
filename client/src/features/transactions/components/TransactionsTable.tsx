@@ -1,24 +1,45 @@
 import { useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import type { Transaction } from "@/types";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import type {
+  Transaction,
+  TransactionSort,
+  TransactionSortField,
+} from "@/types";
 import {
   ArrowDownRight,
   ArrowUpRight,
   Banknote,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  ChevronsUpDown,
   CreditCard,
   Landmark,
+  MoreHorizontal,
+  Pencil,
   RotateCw,
   Smartphone,
+  Trash2,
   type LucideIcon,
 } from "lucide-react";
 
 type Props = {
   transactions: Transaction[];
-  onRowClick?: (transaction: Transaction) => void;
   pageSize?: number;
+  sort?: TransactionSort;
+  onSortChange?: (sort: TransactionSort) => void;
+  onEdit?: (transaction: Transaction) => void;
+  onDelete?: (transaction: Transaction) => void;
+  isLoading?: boolean;
 };
 
 const PAGE_PARAM = "page";
@@ -97,9 +118,23 @@ function getPageNumbers(current: number, total: number): Array<number | "gap"> {
 
 const TransactionsTable = ({
   transactions,
-  onRowClick,
   pageSize = DEFAULT_PAGE_SIZE,
+  sort,
+  isLoading,
+  onSortChange,
+  onEdit,
+  onDelete,
 }: Props) => {
+  const navigate = useNavigate();
+  const handleSort = (field: TransactionSortField) => {
+    if (!onSortChange) return;
+    // Click same column → toggle order. Click new column → default to desc.
+    onSortChange({
+      field,
+      order:
+        sort?.field === field && sort.order === "desc" ? "asc" : "desc",
+    });
+  };
   const [searchParams, setSearchParams] = useSearchParams();
 
   const totalPages = Math.max(1, Math.ceil(transactions.length / pageSize));
@@ -132,7 +167,8 @@ const TransactionsTable = ({
     setSearchParams(searchParams, { replace: true });
   };
 
-  if (transactions.length === 0) {
+  // Empty state only fires when we're done loading AND there's truly nothing.
+  if (!isLoading && transactions.length === 0) {
     return (
       <div className="px-6 py-16 text-center">
         <p className="text-sm font-medium text-slate-700">
@@ -158,13 +194,34 @@ const TransactionsTable = ({
               <th className="px-5 py-3">Description</th>
               <th className="px-5 py-3">Category</th>
               <th className="px-5 py-3">Method</th>
-              <th className="px-5 py-3">Date</th>
-              <th className="px-5 py-3 text-right">Amount</th>
+              <th className="px-5 py-3">
+                <SortableHeader
+                  label="Date"
+                  field="date"
+                  sort={sort}
+                  onClick={onSortChange ? () => handleSort("date") : undefined}
+                />
+              </th>
+              <th className="px-5 py-3 text-right">
+                <SortableHeader
+                  label="Amount"
+                  field="amount"
+                  sort={sort}
+                  align="right"
+                  onClick={onSortChange ? () => handleSort("amount") : undefined}
+                />
+              </th>
+              <th className="px-5 py-3 w-12" aria-label="Actions" />
             </tr>
           </thead>
 
           <tbody>
-            {visibleTransactions.map((tx) => {
+            {isLoading
+              ? Array.from({ length: pageSize }).map((_, i) => (
+                  <SkeletonRow key={`skeleton-${i}`} />
+                ))
+              : null}
+            {!isLoading && visibleTransactions.map((tx) => {
               const isIncome = tx.type === "income";
               const PaymentIcon = paymentMethodIcons[tx.paymentMethod];
               const SignIcon = isIncome ? ArrowUpRight : ArrowDownRight;
@@ -172,10 +229,9 @@ const TransactionsTable = ({
               return (
                 <tr
                   key={tx._id}
-                  onClick={onRowClick ? () => onRowClick(tx) : undefined}
+                  onClick={() => navigate(`/app/transactions/${tx._id}`)}
                   className={cn(
-                    "border-t border-slate-100 transition-colors hover:bg-slate-50",
-                    onRowClick && "cursor-pointer",
+                    "border-t border-slate-100 cursor-pointer transition-colors hover:bg-slate-50",
                   )}
                 >
                   <td className="px-5 py-4">
@@ -236,6 +292,40 @@ const TransactionsTable = ({
                     {isIncome ? "+" : "-"}
                     {formatAmount(tx.amount, tx.currency)}
                   </td>
+
+                  <td
+                    className="px-3 py-4 text-right"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          aria-label="Row actions"
+                          className="inline-flex size-7 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                        >
+                          <MoreHorizontal size={16} />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-32">
+                        <DropdownMenuItem
+                          onSelect={() => onEdit?.(tx)}
+                          className="cursor-pointer"
+                        >
+                          <Pencil size={14} />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onSelect={() => onDelete?.(tx)}
+                          className="cursor-pointer text-rose-600 focus:bg-rose-50 focus:text-rose-700"
+                        >
+                          <Trash2 size={14} />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </td>
                 </tr>
               );
             })}
@@ -243,7 +333,7 @@ const TransactionsTable = ({
         </table>
       </div>
 
-      {totalPages > 1 && (
+      {!isLoading && totalPages > 1 && (
         <TablePagination
           page={page}
           totalPages={totalPages}
@@ -256,6 +346,83 @@ const TransactionsTable = ({
     </div>
   );
 };
+
+function SkeletonRow() {
+  return (
+    <tr className="border-t border-slate-100">
+      <td className="px-5 py-4">
+        <div className="flex items-center gap-3">
+          <span className="size-8 shrink-0 animate-pulse rounded-full bg-slate-100" />
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <div className="h-3 w-32 animate-pulse rounded bg-slate-100" />
+            <div className="h-2 w-20 animate-pulse rounded bg-slate-100" />
+          </div>
+        </div>
+      </td>
+      <td className="px-5 py-4">
+        <div className="h-4 w-16 animate-pulse rounded-full bg-slate-100" />
+      </td>
+      <td className="px-5 py-4">
+        <div className="h-3 w-14 animate-pulse rounded bg-slate-100" />
+      </td>
+      <td className="px-5 py-4">
+        <div className="h-3 w-20 animate-pulse rounded bg-slate-100" />
+      </td>
+      <td className="px-5 py-4 text-right">
+        <div className="ml-auto h-3 w-20 animate-pulse rounded bg-slate-100" />
+      </td>
+      <td className="px-3 py-4 text-right">
+        <div className="ml-auto size-5 animate-pulse rounded bg-slate-100" />
+      </td>
+    </tr>
+  );
+}
+
+type SortableHeaderProps = {
+  label: string;
+  field: TransactionSortField;
+  sort?: TransactionSort;
+  align?: "left" | "right";
+  onClick?: () => void;
+};
+
+function SortableHeader({
+  label,
+  field,
+  sort,
+  align = "left",
+  onClick,
+}: SortableHeaderProps) {
+  const isActive = sort?.field === field;
+  const isAsc = isActive && sort?.order === "asc";
+
+  if (!onClick) {
+    return <span>{label}</span>;
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "inline-flex items-center gap-1 rounded-md text-[11px] font-semibold uppercase tracking-wider text-slate-500 transition-colors hover:text-slate-800",
+        align === "right" && "flex-row-reverse",
+        isActive && "text-slate-900",
+      )}
+    >
+      <span>{label}</span>
+      {isActive ? (
+        isAsc ? (
+          <ChevronUp size={12} />
+        ) : (
+          <ChevronDown size={12} />
+        )
+      ) : (
+        <ChevronsUpDown size={12} className="text-slate-300" />
+      )}
+    </button>
+  );
+}
 
 type TablePaginationProps = {
   page: number;

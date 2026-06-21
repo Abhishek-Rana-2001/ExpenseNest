@@ -2,8 +2,6 @@ import { NavLink, useLocation } from "react-router-dom";
 import { motion } from "motion/react";
 import {
   ArrowRightLeft,
-  ChartNoAxesCombined,
-  Goal,
   LayoutDashboard,
   Settings,
   Wallet,
@@ -28,12 +26,6 @@ const SideBar = () => {
       link: "/app/budgets",
       icon: <Wallet size={18} />,
     },
-    {
-      name: "Analytics",
-      link: "/app/analytics",
-      icon: <ChartNoAxesCombined size={18} />,
-    },
-    { name: "Goals", link: "/app/goals", icon: <Goal size={18} /> },
 
     
   ];
@@ -49,7 +41,7 @@ const SideBar = () => {
       <nav className="flex-1">
         <ul className="flex flex-col gap-1 relative">
           {links.map((link) => {
-            const isActive = location.pathname === link.link;
+            const isActive = location.pathname.includes(link.link);
 
             return (
               <li key={link.name} className="relative">

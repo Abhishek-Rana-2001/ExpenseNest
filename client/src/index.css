@@ -171,6 +171,7 @@ html, body{
   max-width: 100dvw;
   overflow-x: hidden;
   scroll-behavior: smooth;
+  scrollbar-gutter: stable;
 }
 
 

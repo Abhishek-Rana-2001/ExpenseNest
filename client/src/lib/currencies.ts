@@ -4,13 +4,13 @@
  */
 
 export type CurrencyCode =
-  | "INR"
-  | "USD"
-  | "EUR"
-  | "GBP"
-  | "JPY"
-  | "AUD"
-  | "CAD";
+    | "INR"
+    | "USD"
+    | "EUR"
+    | "GBP"
+    | "JPY"
+    | "AUD"
+    | "CAD";
 
 export type CurrencyInfo = {
   code: CurrencyCode;
